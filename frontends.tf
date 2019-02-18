@@ -39,23 +39,41 @@ resource "aws_instance" "front" {
   ami = "${var.front_ami}"
   instance_type = "${var.front_instance_type}" 
   key_name    = "AWS42-EU1"
-  #security_groups = ["${aws_security_group.front.id}"]
-  #vpc_security_group_ids = ["${aws_vpc.main.id}"]
-  #security_groups = ["${aws_security_group.front.id}"]
-  #subnet_id = "${aws_subnet.public.id}"
+  vpc_security_group_ids = ["${aws_security_group.front.id}"]
+  subnet_id = "${aws_subnet.public.*.id[count.index]}"
 
-  user_data = "${data.template_file.user_data.rendered}"
+
+  #user_data = "${data.template_file.user_data.rendered}"
+  user_data = <<-EOF
+            #!/bin/bash
+            sudo mkdir /apps
+            sudo echo "127.0.0.1 $(hostname)" >> /etc/hosts 
+            sudo apt-get -y update
+            sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo apt-key fingerprint 0EBFCD88
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs) stable"
+            sudo apt-get update
+            sudo apt-get -y install docker-ce docker-ce-cli containerd.io
+            sudo usermod -aG docker ubuntu
+            sudo apt-get -y install docker-compose
+            cd /apps
+            sudo git clone https://github.com/maur1th/simple-php-app 
+            cd simple-php-app
+            sed -i.bck 's/8080:80/80:80/g' docker-compose.yml
+            sudo docker-compose up -d
+            EOF
   
   tags = {
     Name = "${var.project_name}-front"
   }
 }
 
-resource "aws_elb" "front" {
+/* #resource "aws_elb" "front" {
   # TO DO
   # see https://www.terraform.io/docs/providers/aws/r/elb.html
   availability_zones = "${var.azs_list}"
-  #security_groups = ["${aws_security_group.elb.id}"]
+  security_groups = ["${aws_security_group.elb.id}"]
 
   listener {
       instance_port = "${var.front_elb_port}"
@@ -85,16 +103,17 @@ resource "aws_elb" "front" {
 
 }
 
+
 ### Outputs
 output "elb_endpoint" {
   # TO DO
   # see https://www.terraform.io/intro/getting-started/outputs.html
   value = "${aws_elb.front.dns_name}"
 }
-
+*/
 output "instance_ip" {
   # TO DO
-  value = "${aws_instance.front.private_ip}"
+  value = "${aws_instance.front.public_ip}"
 }
 
 
