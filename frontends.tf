@@ -69,11 +69,12 @@ resource "aws_instance" "front" {
   }
 }
 
-/* #resource "aws_elb" "front" {
+resource "aws_elb" "front" {
   # TO DO
   # see https://www.terraform.io/docs/providers/aws/r/elb.html
-  availability_zones = "${var.azs_list}"
+  #availability_zones = ["eu-west-1a"]
   security_groups = ["${aws_security_group.elb.id}"]
+  subnets = ["${aws_subnet.public.*.id}"]
 
   listener {
       instance_port = "${var.front_elb_port}"
@@ -98,7 +99,7 @@ resource "aws_instance" "front" {
   connection_draining_timeout = 400
 
   tags = {
-    Name = "D2SI-Front-ELB"
+    Name = "${var.project_name}-elb"
   }
 
 }
@@ -110,10 +111,53 @@ output "elb_endpoint" {
   # see https://www.terraform.io/intro/getting-started/outputs.html
   value = "${aws_elb.front.dns_name}"
 }
-*/
-output "instance_ip" {
+
+output "front_instance_block_size" {
+  # TO DO
+  value = "${aws_instance.front.root_block_device}"
+}
+
+output "front_instance_ip" {
   # TO DO
   value = "${aws_instance.front.public_ip}"
+}
+
+output "front_instance_ip_private" {
+  # TO DO
+  value = "${aws_instance.front.private_ip}"
+}
+
+
+output "front_instance_private_dns" {
+  # TO DO
+  value = "${aws_instance.front.private_dns}"
+}
+
+output "front_instance_public_dns" {
+  # TO DO
+  value = "${aws_instance.front.public_dns}"
+}
+
+output "front_instance_type" {
+  # TO DO
+  value = "${aws_instance.front.instance_type}" 
+}
+
+output "front_instance_monitoring" {
+  # TO DO
+  value = "${aws_instance.front.monitoring}"
+}
+
+output "elb_subnet_id" {
+  # TO DO
+  # see https://www.terraform.io/intro/getting-started/outputs.html
+  value = ["${aws_subnet.public.*.id}"]
+}
+
+output "elb_subnet_cidr" {
+  # TO DO
+  # see https://www.terraform.io/intro/getting-started/outputs.html
+  value = ["${aws_subnet.public.*.cidr_block}"]
 }
 
 
